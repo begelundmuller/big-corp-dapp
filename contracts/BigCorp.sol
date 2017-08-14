@@ -60,6 +60,9 @@ contract BigCorp {
     return true;
   }
 
+  // Note that ERC20 defines a couple more functions that we do not implement
+  // See: https://github.com/ethereum/EIPs/issues/20
+
   // Variables and functions for voting on a president
   // ----------------------------------------------------------------
 
@@ -67,7 +70,7 @@ contract BigCorp {
   address public president;
 
   // Tracks the president candidate backed by a given account
-  mapping (address => address) public votesFor;
+  mapping (address => address) public candidateSupportedBy;
 
   // Gives the number of shares currently backing a given account for president.
   mapping (address => uint) public sharesVotingFor;
@@ -78,12 +81,12 @@ contract BigCorp {
   // Public function used by shareholders to back an account for president
   function voteForPresident(address candidate) {
     // If sender currently backs a candidate, unback
-    if (votesFor[msg.sender] > 0) {
-      decreaseSupport(votesFor[msg.sender], sharesOwned[msg.sender]);
+    if (candidateSupportedBy[msg.sender] > 0) {
+      decreaseSupport(candidateSupportedBy[msg.sender], sharesOwned[msg.sender]);
     }
 
     // Back new candidate
-    votesFor[msg.sender] = candidate;
+    candidateSupportedBy[msg.sender] = candidate;
     increaseSupport(candidate, sharesOwned[msg.sender]);
 
     // Emit event
@@ -97,7 +100,7 @@ contract BigCorp {
   //   (president == 0) OR (sharesVotingFor[president] > (totalShares / 2))
   //
   // Invariant 2
-  //   sharesVotingFor[a] = sum(sharesOwned[b] forall b where votesFor[b] == a)
+  //   sharesVotingFor[a] = sum(sharesOwned[b] forall b where candidateSupportedBy[b] == a)
 
   function increaseSupport(address candidate, uint shares) internal {
     // Ignore if shares == 0
@@ -131,12 +134,12 @@ contract BigCorp {
 
   function adjustVotesAfterTransfer(address from, address to, uint amount) internal {
     // If the sender backs a candidate,
-    if (votesFor[from] > 0) {
-      decreaseSupport(votesFor[from], amount);
+    if (candidateSupportedBy[from] > 0) {
+      decreaseSupport(candidateSupportedBy[from], amount);
     }
 
-    if (votesFor[to] > 0) {
-      increaseSupport(votesFor[to], amount);
+    if (candidateSupportedBy[to] > 0) {
+      increaseSupport(candidateSupportedBy[to], amount);
     }
 
     // Emit event

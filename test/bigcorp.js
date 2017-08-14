@@ -31,7 +31,7 @@ contract('BigCorp', function(accounts) {
       return big_corp.president();
     }).then(function(res) {
       president = res;
-      return big_corp.votesFor(creator);
+      return big_corp.candidateSupportedBy(creator);
     }).then(function(res) {
       creatorBacks = res;
       return big_corp.sharesVotingFor(toElect);
@@ -67,7 +67,7 @@ contract('BigCorp', function(accounts) {
       return big_corp.president();
     }).then(function(res) {
       president = res;
-      return big_corp.votesFor(creator);
+      return big_corp.candidateSupportedBy(creator);
     }).then(function(res) {
       creatorBacks = res;
       return big_corp.sharesVotingFor(toElect);

@@ -41,7 +41,7 @@ window.App = {
       // Refresh interface
       self.refreshUI();
 
-      // Listen for events on
+      // Listen for events; update UI on new events
       BigCorp.deployed().then(function(instance) {
         var watcher = function(err, res) {
           self.refreshUI();
@@ -56,17 +56,20 @@ window.App = {
     });
   },
 
+  // Updates status box
   setStatus: function(message) {
     var status = document.getElementById("status");
     status.innerHTML = message;
   },
 
+  // Refreshes UI components that rely on data from blockchain
   refreshUI: function() {
     this.refreshShares();
-    this.refreshpresident();
-    this.refreshBacking();
+    this.refreshPresident();
+    this.refreshVoting();
   },
 
+  // Refreshes number of shares owned by user
   refreshShares: function() {
     var self = this;
 
@@ -97,7 +100,8 @@ window.App = {
     });
   },
 
-  refreshpresident: function() {
+  // Refreshes who is currently president of BigCorp
+  refreshPresident: function() {
     var self = this;
 
     var corp;
@@ -136,33 +140,35 @@ window.App = {
     });
   },
 
-  refreshBacking: function() {
+  // Refresh info on who the user is backing, and how much support his/her
+  // candidate has
+  refreshVoting: function() {
     var self = this;
 
     var corp;
-    var currentlyBacking;
-    var currentlyBackingShares;
+    var currentlyVotingFor;
+    var sharesVotingForCandidate;
     var totalShares;
 
     BigCorp.deployed().then(function(instance) {
       corp = instance;
-      return corp.votesFor.call(self.account);
+      return corp.candidateSupportedBy.call(self.account);
     }).then(function(value) {
-      currentlyBacking = value;
-      return corp.sharesVotingFor.call(currentlyBacking);
+      currentlyVotingFor = value;
+      return corp.sharesVotingFor.call(currentlyVotingFor);
     }).then(function(value) {
-      currentlyBackingShares = value.valueOf();
+      sharesVotingForCandidate = value.valueOf();
       return corp.totalSupply.call();
     }).then(function(value) {
       totalShares = value.valueOf();
 
       var backingString;
-      if (self.isNullAddress(currentlyBacking)) {
+      if (self.isNullAddress(currentlyVotingFor)) {
         backingString = "no one";
       } else {
-        backingString = currentlyBacking.substring(0, 8);
-        backingString += " who has " + (currentlyBackingShares / totalShares * 100).toFixed(1);
-        backingString += "% support (" + currentlyBackingShares + " shares)";
+        backingString = currentlyVotingFor.substring(0, 8);
+        backingString += " who has " + (sharesVotingForCandidate / totalShares * 100).toFixed(1);
+        backingString += "% support (" + sharesVotingForCandidate + " shares)";
       }
 
       var backingElem = document.getElementById("backing");
@@ -175,22 +181,22 @@ window.App = {
     });
   },
 
-  back: function() {
+  vote: function() {
     var self = this;
 
-    var backAddress = document.getElementById("back_address").value;
+    var candidateAddress = document.getElementById("candidate_address").value;
 
     self.setStatus("Sending transaction, please wait...");
 
     var corp;
     BigCorp.deployed().then(function(instance) {
       corp = instance;
-      return instance.voteForPresident(backAddress, {from: self.account});
+      return instance.voteForPresident(candidateAddress, {from: self.account});
     }).then(function(res) {
       console.log(res);
       self.setStatus("Transaction complete. Refreshing...");
-      self.refreshBacking();
-      self.refreshpresident();
+      self.refreshVoting();
+      self.refreshPresident();
     }).catch(function(e) {
       console.log(e);
       self.setStatus("Error backing candidate; see log.");
